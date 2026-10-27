@@ -1,15 +1,36 @@
 {
   "name": "code-orb",
   "displayName": "Code Orb",
-  "description": "A fun orb that lives in your ide",
+  "description": "A lively, frame-animated companion that reacts to your VS Code activity and follows your theme.",
   "publisher": "Ruvaaaaaa",
   "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ruvaaa/Code-Orb"
+  },
+  "homepage": "https://github.com/Ruvaaa/Code-Orb#readme",
+  "bugs": {
+    "url": "https://github.com/Ruvaaa/Code-Orb/issues"
+  },
+  "license": "MIT",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.140.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "code companion",
+    "animated companion",
+    "desktop pet",
+    "orb",
+    "productivity",
+    "motivation",
+    "pixel art",
+    "VS Code pet",
+    "animated mascot"
   ],
   "activationEvents": [
     "onView:codeorb.orbView",
