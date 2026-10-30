@@ -14,7 +14,8 @@ Code Orb lives beneath the Explorer's other views and blends into both light and
 
 - **Animated companion:** More than 48 frame assets with blinking, looking, hopping, sleeping, celebrating, thinking, worried, playful, and ambient animations.
 - **Editor reactions:** Responds to typing, saving, diagnostics, task completion, debugging, active-editor changes, window focus, and inactivity.
-- **Pointer interaction:** Looks toward the pointer in any of nine directions and reacts with a poke, bounce, or curious pose.
+- **Pointer interaction:** Tracks the pointer relative to the orb, looks in eight directions, and reacts with a poke, bounce, or curious pose.
+- **Ambient movement:** Occasionally turns around, bounces, or hops while idle.
 - **Gentle roaming:** Moves smoothly across the sidebar when roaming is enabled.
 - **Theme-aware:** Uses VS Code theme variables and transparent surfaces for a native appearance.
 - **Reduced-motion support:** Respects VS Code settings and the operating system's reduced-motion preference.

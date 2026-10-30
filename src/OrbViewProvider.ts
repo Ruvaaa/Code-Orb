@@ -60,7 +60,7 @@ export class OrbViewProvider implements vscode.WebviewViewProvider {
         const csp = `default-src 'none'; connect-src ${webview.cspSource}; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
         return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><meta name="viewport" content="width=device-width,initial-scale=1"><link nonce="${nonce}" rel="stylesheet" href="${styleUri}"><title>Code Orb</title></head>
-<body><main id="orb-stage" class="orb-stage" aria-label="Code Orb"><div id="orb" class="orb"><img id="orb-frame" class="is-visible" alt="Code Orb"><img id="orb-frame-next" alt="" aria-hidden="true"></div></main><script nonce="${nonce}">window.__CODEORB__={framesUri:${JSON.stringify(framesUri.toString())},assetRoot:${JSON.stringify(webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media')).toString())}};</script><script nonce="${nonce}" src="${scriptUri}"></script></body></html>`;
+<body><main id="orb-stage" class="orb-stage" aria-label="Code Orb"><div id="orb" class="orb"><img id="orb-frame" alt="Code Orb"></div></main><script nonce="${nonce}">window.__CODEORB__={framesUri:${JSON.stringify(framesUri.toString())},assetRoot:${JSON.stringify(webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media')).toString())}};</script><script nonce="${nonce}" src="${scriptUri}"></script></body></html>`;
     }
 }
 

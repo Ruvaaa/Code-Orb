@@ -1,8 +1,7 @@
 (() => {
   const stage = document.getElementById('orb-stage');
   const orb = document.getElementById('orb');
-  let image = document.getElementById('orb-frame');
-  let nextImage = document.getElementById('orb-frame-next');
+  const image = document.getElementById('orb-frame');
   const vscode = acquireVsCodeApi();
   let frames = {};
   let frameUrls = {};
@@ -11,6 +10,8 @@
   let reducedFromSetting = false;
   let size = 260;
   let current = null;
+  let cursorPosition = null;
+  let cursorFrame = '';
   let queue = [];
   let rafId = 0;
   let lastTime = 0;
@@ -25,12 +26,15 @@
   let roamTimer = 0;
   let motionX = 0;
   let motionY = 0;
+  let targetMotionY = 0;
   let roamedFrame = '';
 
   const sequenceFrames = {
     blink: [1,2,3,4,1], double_blink: [1,2,3,4,3,2,1], alert: [1,5,1],
     curious: [1,40,42,40,43,1], bounce: [1,49,44,45,50,45,46,71,1],
     hop: [1,49,47,48,46,71,1], big_bounce: [1,51,52,50,52,46,71,1],
+    turn_left: [1,17,18,19,20,21,22,16,15,14,13,12,1],
+    turn_right: [1,12,13,14,15,16,22,21,20,19,18,17,1],
     look_around: [1,40,42,41,43,40,43,41,40,1], wobble: [57,1,58,1,57,1,58,1],
     wink: [1,10,1], poke: [1,54,53,54,53,71,1], loading_pulse: [1,54,53,54,1],
     thinking: [1,63,64,63,65,63,1], worried: [1,59,60,59,1],
@@ -57,15 +61,7 @@
 
   function setFrame(name) {
     const url = frameUrls[name];
-    if (!url || image.src === url) return;
-    const incoming = image === nextImage ? document.getElementById('orb-frame') : nextImage;
-    incoming.src = url;
-    incoming.classList.add('is-visible');
-    image.classList.remove('is-visible');
-    image = incoming;
-    nextImage = image === document.getElementById('orb-frame-next')
-      ? document.getElementById('orb-frame')
-      : document.getElementById('orb-frame-next');
+    if (url && image.src !== url) image.src = url;
   }
 
   function stopLoop() {
@@ -100,7 +96,19 @@
     elapsed += delta;
     lastTime = time;
     updateRoam(delta);
-    if (!current) { rafId = requestAnimationFrame(tick); return; }
+    const verticalDistance = targetMotionY - motionY;
+    if (Math.abs(verticalDistance) > 0.1) {
+      motionY += verticalDistance * Math.min(1, delta * 0.02);
+      applyPosition();
+    } else if (motionY !== targetMotionY) {
+      motionY = targetMotionY;
+      applyPosition();
+    }
+    if (!current) {
+      if (roamEnabled || Math.abs(targetMotionY - motionY) > 0.1) rafId = requestAnimationFrame(tick);
+      else rafId = 0;
+      return;
+    }
     const numberDuration = current.name === 'blink' || current.name === 'double_blink' ? 45 : 68;
     if (elapsed >= numberDuration) {
       elapsed %= numberDuration;
@@ -129,27 +137,28 @@
     current = null;
     stopLoop();
     setFrame('idle');
+    cursorFrame = '';
+    applyCursorLook();
     if (!interrupted) scheduleIdle();
     else if (queue.length) play(queue.shift().name);
+    if (visible && !rafId && (roamEnabled || Math.abs(targetMotionY - motionY) > 0.1)) {
+      rafId = requestAnimationFrame(tick);
+    }
   }
 
   function showCurrentFrame(interrupted) {
     if (!current) return;
     const index = current.indices[frameIndex];
-    const names = Object.keys(frames).find(name => frameIndexName(current.indices, index, frameIndex, name));
     const frameName = Object.entries(frames).find(([, file]) => Number(file.match(/^([0-9]+)_/)?.[1]) === index)?.[0] || 'idle';
     setFrame(frameName);
-    motionY = 0;
-    if (current.name === 'bounce' && bounceIndices.has(index) && !interrupted) motionY = index === 50 ? -18 : -9;
-    if (['hop','celebrate'].includes(current.name) && (index === 47 || index === 66)) motionY = -16;
+    targetMotionY = 0;
+    if (current.name === 'bounce' && bounceIndices.has(index) && !interrupted) targetMotionY = index === 50 ? -18 : -9;
+    if (['hop','celebrate'].includes(current.name) && (index === 47 || index === 66)) targetMotionY = -16;
     applyPosition();
   }
 
-  function frameIndexName(indices, index, position, name) { return false; }
-
   function setFrameScale(scale) {
-    document.getElementById('orb-frame').style.setProperty('--orb-fit', scale.toString());
-    document.getElementById('orb-frame-next').style.setProperty('--orb-fit', scale.toString());
+    image.style.setProperty('--orb-fit', scale.toString());
   }
 
   function applyPosition() {
@@ -163,11 +172,16 @@
     const half = Math.max(0, (stage.clientWidth - size) / 2 - 10);
     roamTargetX = -half + Math.random() * half * 2;
     const frame = roamTargetX < roamX ? 'lean_left' : 'lean_right';
-    setFrame(frame);
+    if (!cursorPosition) setFrame(frame);
     roamedFrame = frame;
     roamTimer = setTimeout(() => {
-      setFrame('settle');
-      setTimeout(() => { if (!current) setFrame('idle'); }, 380);
+      if (!current && !cursorPosition) setFrame('settle');
+      setTimeout(() => {
+        if (!current) {
+          if (cursorPosition) applyCursorLook();
+          else setFrame('idle');
+        }
+      }, 380);
     }, 1200 + Math.random() * 1400);
     roamTimer = setTimeout(chooseRoamTarget, 3000 + Math.random() * 4000);
   }
@@ -183,8 +197,11 @@
     if (!visible || sleepHold) return;
     idleTimer = setTimeout(() => {
       const enabled = window.__CODEORB_SETTINGS__.idleBehaviors || [];
-      const choices = enabled.length ? enabled : ['blink','look_around','curious','wobble','wink','blink'];
-      let name = choices[Math.floor(Math.random() * choices.length)];
+      const choices = enabled.length ? enabled : ['blink','look_around','curious','wobble','wink','bounce'];
+      const spontaneous = ['turn_left', 'turn_right', ...choices.filter(choice => ['bounce', 'hop'].includes(choice))];
+      let name = Math.random() < 0.2 && spontaneous.length
+        ? spontaneous[Math.floor(Math.random() * spontaneous.length)]
+        : choices[Math.floor(Math.random() * choices.length)];
       if (name === previousBehavior) name = choices.find(choice => choice !== previousBehavior) || name;
       previousBehavior = name;
       play(name); setTimeout(scheduleIdle, 400);
@@ -193,21 +210,42 @@
 
   function mouseLook(event) {
     if (!visible) return;
-    const rect = stage.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width * 2 - 1;
-    const y = (event.clientY - rect.top) / rect.height * 2 - 1;
-    if (Math.abs(x) < .25 && Math.abs(y) < .25) { setFrame('idle'); return; }
+    cursorPosition = { x: event.clientX, y: event.clientY };
+    applyCursorLook();
+  }
+
+  function applyCursorLook() {
+    if (!cursorPosition || current || sleepHold) return;
+    const orbRect = orb.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const x = (cursorPosition.x - (orbRect.left + orbRect.width / 2)) / Math.max(size * 0.75, stageRect.width * 0.38);
+    const y = (cursorPosition.y - (orbRect.top + orbRect.height / 2)) / Math.max(size * 0.75, stageRect.height * 0.38);
+    const horizontal = x < -0.32 ? -1 : x > 0.32 ? 1 : 0;
+    const vertical = y < -0.32 ? -1 : y > 0.32 ? 1 : 0;
     let name = 'idle';
-    if (y < -.25) name = x < -.25 ? 'round_look_l' : x > .25 ? 'round_look_r' : 'round_look_up';
-    else if (y > .25) name = x < -.25 ? 'round_look_l' : x > .25 ? 'round_look_r' : 'round_look_down';
-    else name = x < 0 ? 'round_look_l' : 'round_look_r';
-    setFrame(name);
+    if (horizontal && vertical) {
+      name = vertical < 0
+        ? (horizontal < 0 ? 'up_left' : 'up_right')
+        : (horizontal < 0 ? 'down_left' : 'down_right');
+    } else if (horizontal) {
+      name = horizontal < 0 ? 'round_look_l' : 'round_look_r';
+    } else if (vertical) {
+      name = vertical < 0 ? 'round_look_up' : 'round_look_down';
+    }
+    if (name !== cursorFrame) {
+      cursorFrame = name;
+      setFrame(name);
+    }
   }
 
   let clicks = 0;
   let clickTimer = 0;
   stage.addEventListener('pointermove', mouseLook);
-  stage.addEventListener('pointerleave', () => setFrame('idle'));
+  stage.addEventListener('pointerleave', () => {
+    cursorPosition = null;
+    cursorFrame = '';
+    if (!current) setFrame('idle');
+  });
   stage.addEventListener('click', () => {
     clicks++;
     clearTimeout(clickTimer);

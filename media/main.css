@@ -3,7 +3,6 @@
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--vscode-sideBar-background, var(--vscode-editor-background, transparent)); }
 .orb-stage { position: relative; width: 100%; height: 260px; min-height: 260px; max-height: 260px; display: grid; place-items: end center; overflow: hidden; background: var(--vscode-sideBar-background, var(--vscode-editor-background, transparent)); }
 .orb-stage::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 52px; height: 1px; background: var(--vscode-widget-border, currentColor); opacity: .18; pointer-events: none; }
-.orb { position: relative; display: grid; place-items: end center; width: 260px; height: 260px; margin: 0; transform-origin: 50% 100%; will-change: transform; transition: transform 90ms cubic-bezier(.22,.61,.36,1); }
-.orb img { width: 256px; height: 256px; max-width: none; object-fit: contain; position: absolute; left: 50%; bottom: 0; opacity: 0; transform: translateX(-50%) scale(var(--orb-fit, .9375)); transform-origin: center bottom; transition: opacity 75ms linear, transform 90ms cubic-bezier(.22,.61,.36,1); user-select: none; pointer-events: none; }
-.orb img.is-visible { opacity: 1; }
+.orb { position: relative; display: grid; place-items: end center; width: 260px; height: 260px; margin: 0; transform-origin: 50% 100%; will-change: transform; }
+.orb img { width: 256px; height: 256px; max-width: none; object-fit: contain; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%) scale(var(--orb-fit, .9375)); transform-origin: center bottom; user-select: none; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .orb, .orb img { transition: none !important; } }
