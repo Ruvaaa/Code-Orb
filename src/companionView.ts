@@ -31,15 +31,15 @@ export class CompanionViewProvider implements vscode.WebviewViewProvider {
         const nonce = getNonce();
         const frameNames: Record<string, string> = {
             idle: '1_idle.png', blinkStart: '2_blink_start.png', blink: '3_blink_closed.png',
-            alert: '4_alert.png', squash: '5_squash.png', stretch: '6_stretch.png', tilt: '7_tilt.png',
-            landing: '8_landing.png', lookLeft: '9_look_left.png', lookRight: '10_look_right.png',
-            lookUp: '11_look_up.png', sleepy: '12_sleepy.png', sleeping: '13_sleeping.png',
-            wobbleLeft: '14_wobble_left.png', wobbleRight: '15_wobble_right.png', jump: '16_jump_apex.png',
-            lookDown: '17_look_down.png', wink: '18_wink.png', pop: '19_pop.png', shrink: '20_shrink.png',
-            squishLeft: '21_squish_left.png', squishRight: '22_squish_right.png', worried: '23_worried.png', focus: '24_focus.png'
+            alert: '5_alert.png', squash: '44_squash.png', stretch: '45_stretch.png',
+            landing: '46_landing.png', lookLeft: '41_round_look_l.png', lookRight: '40_round_look_r.png',
+            lookUp: '42_round_look_up.png', sleepy: '61_drowsy.png', sleeping: '62_sleeping.png',
+            wobbleLeft: '57_wobble_left.png', wobbleRight: '58_wobble_right.png', jump: '50_jump_apex.png',
+            lookDown: '43_round_look_down.png', wink: '10_wink_right.png', pop: '53_pop.png',
+            shrink: '54_shrink.png', worried: '59_worried.png', focus: '63_focus.png'
         };
         const frames = Object.fromEntries(Object.entries(frameNames).map(([key, name]) => [key,
-            webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'assets', 'frames', name)).toString()
+            webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'assets', 'frames', 'frames', name)).toString()
         ]));
         const csp = [
             "default-src 'none'",
